@@ -2,10 +2,14 @@
 
 import * as THREE from "./threejs/Three.js";
 import { GLTFLoader } from "./threejs/addons/loaders/GLTFLoader.js";
+import { Timer } from "./threejs/addons/misc/Timer.js";
 
 import { Hexagon, hex_from_pixel } from "./hex.js";
 
 const scene = new THREE.Scene();
+
+// Timer setup.
+const timer = new Timer();
 
 // Camera view setup.
 let ratio = window.innerWidth / window.innerHeight;
@@ -14,7 +18,8 @@ let width = ratio > 1 ? ratio * unit : unit;
 let height = ratio > 1 ? unit : unit / ratio;
 
 const camera = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, height / -2, 1, 10);
-window.globalCamera = camera;
+// DEBUG
+//window.globalCamera = camera;
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -37,9 +42,24 @@ window.addEventListener('resize', (_event) => {
 });
 
 camera.position.x = 0;
-camera.position.y = 5;
-camera.position.z = 5;
+camera.position.y = 3;
+camera.position.z = 7;
 camera.lookAt(0, 0, 0);
+
+const CAMERA_ORBIT_RADIUS = 7.0;
+const CAMERA_ORBIT_RATE = 0.3;
+let camera_orbit_radians = 0;
+
+function orbit_camera_update() {
+  camera_orbit_radians += CAMERA_ORBIT_RATE * timer.getDelta();
+  if (camera_orbit_radians > 2.0 * Math.PI) {
+    camera_orbit_radians -= 2.0 * Math.PI;
+  }
+
+  camera.position.z = Math.cos(camera_orbit_radians) * CAMERA_ORBIT_RADIUS;
+  camera.position.x = Math.sin(camera_orbit_radians) * CAMERA_ORBIT_RADIUS;
+  camera.lookAt(0, 0, 0);
+}
 
 // Mouse input.
 const raycaster = new THREE.Raycaster();
@@ -53,14 +73,18 @@ window.addEventListener("pointermove", (event) => {
 
 // Load hexagon.
 const gltf_loader = new GLTFLoader();
+const hexagon_count = 7;
 let hexagon = undefined;
+let hexagon_instanced_mesh = undefined;
+let dummy = new THREE.Object3D();
 
 gltf_loader.load(
   '/res/hexagon.glb',
   function ( gltf ) {
     hexagon = gltf.scene;
-    window.globalHexagon = hexagon;
-    scene.add( gltf.scene );
+    // DEBUG
+//    window.globalHexagon = hexagon;
+    // scene.add( gltf.scene );
   },
   function ( xhr ) {
   },
@@ -81,13 +105,37 @@ const light = new THREE.AmbientLight(0xFFFFFF, 1);
 scene.add(light);
 
 // Main animation loop.
-function animate() {
+function animate(timestamp) {
   requestAnimationFrame(animate);
 
-  if (hexagon !== undefined) {
-//    hexagon.rotation.x += 0.01;
-//    hexagon.rotation.y += 0.01;
+  timer.update(timestamp);
+
+  if (hexagon !== undefined && hexagon_instanced_mesh === undefined) {
+    hexagon_instanced_mesh = new THREE.InstancedMesh(hexagon.children[0].geometry, hexagon.children[0].material, hexagon_count);
+    hexagon_instanced_mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+    // Center hex.
+    let hexagon_hex = new Hexagon(0, 0);
+    let hexagon_pos = hexagon_hex.to_pixel(1);
+    dummy.position.set(hexagon_pos.x, 0, hexagon_pos.y);
+    dummy.updateMatrix();
+    hexagon_instanced_mesh.setMatrixAt(0, dummy.matrix);
+
+    // Layer 1 ring hexes.
+    let ring_hexagons = hexagon_hex.ring(1);
+    for (let i = 0; i < ring_hexagons.length; ++i) {
+      if (i + 1 < hexagon_count) {
+        hexagon_pos = ring_hexagons[i].to_pixel(1);
+        dummy.position.set(hexagon_pos.x, 0, hexagon_pos.y);
+        dummy.updateMatrix();
+        hexagon_instanced_mesh.setMatrixAt(i + 1, dummy.matrix);
+      }
+    }
+
+    scene.add(hexagon_instanced_mesh);
   }
+
+  orbit_camera_update();
 
   renderer.render(scene, camera);
 
