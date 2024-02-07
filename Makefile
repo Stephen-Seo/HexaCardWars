@@ -8,7 +8,7 @@ JAVASCRIPT_SOURCES = \
 
 JAVASCRIPT_SOURCES_OUT = $(subst src,dist,${JAVASCRIPT_SOURCES})
 
-all: dist/index.html dist/threejs ${JAVASCRIPT_SOURCES_OUT}
+all: dist/index.html dist/threejs ${JAVASCRIPT_SOURCES_OUT} res
 
 dist/index.html: index.html
 	@mkdir -p dist
@@ -23,8 +23,13 @@ dist/threejs: ${THREEJS_ZIPS}
 	echo -n "${THREEJS_ZIPS}" | xargs -d ' ' -I zipname bash -c \
 		'(test -x /bin/bsdtar && bsdtar -xf zipname -C dist/threejs) \
 		|| (text -x /bin/unzip && unzip -d dist/threejs zipname)'
+	find dist/threejs/addons -type f -regex '.*\.js$$' -exec sed -i 's|"three"|"/threejs/Three.js"|g' '{}' ';'
 
-.PHONY: clean
+.PHONY: clean res
+
+res:
+	@mkdir -p dist
+	cp -r res dist/
 
 clean:
 	rm -rf dist
