@@ -13,7 +13,7 @@ const timer = new Timer();
 
 // Camera view setup.
 let ratio = window.innerWidth / window.innerHeight;
-const unit = 4;
+const unit = 6;
 let width = ratio > 1 ? ratio * unit : unit;
 let height = ratio > 1 ? unit : unit / ratio;
 
