@@ -4,7 +4,9 @@ THREEJS_ZIPS = \
 	third_party/threejs_addons_utils_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip
 
 JAVASCRIPT_SOURCES = \
-	src/game.js
+	src/game.js \
+	src/hex.js \
+	src/utils.js
 
 JAVASCRIPT_SOURCES_OUT = $(subst src,dist,${JAVASCRIPT_SOURCES})
 

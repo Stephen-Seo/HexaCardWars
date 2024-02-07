@@ -3,6 +3,8 @@
 import * as THREE from "./threejs/Three.js";
 import { GLTFLoader } from "./threejs/addons/loaders/GLTFLoader.js";
 
+import { Hexagon, hex_from_pixel } from "./hex.js";
+
 const scene = new THREE.Scene();
 
 // Camera view setup.
