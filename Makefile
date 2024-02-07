@@ -1,4 +1,7 @@
-THREEJS_ZIP_NAME=threejs_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip
+THREEJS_ZIPS = \
+	third_party/threejs_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip \
+	third_party/threejs_addons_loaders_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip \
+	third_party/threejs_addons_utils_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip
 
 JAVASCRIPT_SOURCES = \
 	src/game.js
@@ -15,10 +18,11 @@ dist/%.js: src/%.js
 	@mkdir -p $(dir $<)
 	cp $< $@
 
-dist/threejs: third_party/${THREEJS_ZIP_NAME}
+dist/threejs: ${THREEJS_ZIPS}
 	@mkdir -p dist/threejs
-	(test -x /bin/bsdtar && bsdtar -xf third_party/${THREEJS_ZIP_NAME} -C dist/threejs) \
-		|| (text -x /bin/unzip && unzip -d dist/threejs third_party/${THREEJS_ZIP_NAME})
+	echo -n "${THREEJS_ZIPS}" | xargs -d ' ' -I zipname bash -c \
+		'(test -x /bin/bsdtar && bsdtar -xf zipname -C dist/threejs) \
+		|| (text -x /bin/unzip && unzip -d dist/threejs zipname)'
 
 .PHONY: clean
 
