@@ -5,6 +5,7 @@ import { GLTFLoader } from "./threejs/addons/loaders/GLTFLoader.js";
 import { Timer } from "./threejs/addons/misc/Timer.js";
 
 import { Hexagon, hex_from_pixel } from "./hex.js";
+import { cube_lerp } from "./utils.js";
 
 const scene = new THREE.Scene();
 
@@ -25,6 +26,75 @@ const camera = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, h
 // DEBUG
 //window.globalCamera = camera;
 
+let camera_target = {
+  "sta_x": 0,
+  "sta_y": 0,
+  "sta_z": 0,
+  "end_x": 0,
+  "end_y": 0,
+  "end_z": 0,
+  "amount": 0,
+  "get_x": function () {
+    if (this.amount >= 1.0) {
+      return this.end_x;
+    } else if (this.amount <= 0.0) {
+      return this.sta_x;
+    } else {
+      return cube_lerp(this.sta_x, this.end_x, this.amount);
+    }
+  },
+  "get_y": function () {
+    if (this.amount >= 1.0) {
+      return this.end_y;
+    } else if (this.amount <= 0.0) {
+      return this.sta_y;
+    } else {
+      return cube_lerp(this.sta_y, this.end_y, this.amount);
+    }
+  },
+  "get_z": function () {
+    if (this.amount >= 1.0) {
+      return this.end_z;
+    } else if (this.amount <= 0.0) {
+      return this.sta_z;
+    } else {
+      return cube_lerp(this.sta_z, this.end_z, this.amount);
+    }
+  },
+  "set_x": function (v) {
+    this.sta_x = this.end_x;
+    this.end_x = v;
+    this.amount = 0.0;
+  },
+  "set_y": function (v) {
+    this.sta_y = this.end_y;
+    this.end_y = v;
+    this.amount = 0.0;
+  },
+  "set_z": function (v) {
+    this.sta_z = this.end_z;
+    this.end_z = v;
+    this.amount = 0.0;
+  },
+  "set_pos": function (x, y, z) {
+    this.sta_x = this.get_x();
+    this.sta_y = this.get_y();
+    this.sta_z = this.get_z();
+
+    this.end_x = x;
+    this.end_y = y;
+    this.end_z = z;
+
+    this.amount = 0.0;
+  },
+  "rate": 1.0,
+  "update": function () {
+    if (this.amount < 1.0) {
+      this.amount += this.rate * timer.getDelta();
+    }
+  }
+};
+
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -41,14 +111,14 @@ window.addEventListener('resize', (_event) => {
   camera.right = width / 2;
   camera.top = height / 2;
   camera.bottom = height / -2;
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(camera_target.get_x(), camera_target.get_y(), camera_target.get_z());
   camera.updateProjectionMatrix();
 });
 
 camera.position.x = 0;
 camera.position.y = 6;
 camera.position.z = 10;
-camera.lookAt(0, 0, 0);
+camera.lookAt(camera_target.get_x(), camera_target.get_y(), camera_target.get_z());
 
 const CAMERA_ORBIT_RADIUS = 10.0;
 const CAMERA_ORBIT_RATE = 0.1;
@@ -62,7 +132,7 @@ function orbit_camera_update() {
 
   camera.position.z = Math.cos(camera_orbit_radians) * CAMERA_ORBIT_RADIUS;
   camera.position.x = Math.sin(camera_orbit_radians) * CAMERA_ORBIT_RADIUS;
-  camera.lookAt(0, 0, 0);
+  camera.lookAt(camera_target.get_x(), camera_target.get_y(), camera_target.get_z());
 }
 
 // Mouse input.
@@ -147,10 +217,27 @@ function animate(timestamp) {
     const intersection = raycaster.intersectObject(hexagon_instanced_mesh);
     for (let i = 0; i < intersection.length; ++i) {
       const interId = intersection[i].instanceId;
+      if (is_mouseclick) {
+        is_mouseclick = false;
+        // DEBUG
+        //console.log("intersection point: " + intersection[i].point.x + ", " + intersection[i].point.z);
+        let clicked_hexagon = hex_from_pixel(intersection[i].point.x,
+                                             intersection[i].point.z,
+                                             1).to_int_hex();
+
+        // DEBUG
+        //console.log("clicked_hexagon: " + clicked_hexagon.x + ", " + clicked_hexagon.z);
+        let hexagon_pos = clicked_hexagon.to_pixel(1);
+        // DEBUG
+        //console.log("pos: " + hexagon_pos.x + ", " + hexagon_pos.y);
+        camera_target.set_pos(hexagon_pos.x, 0, hexagon_pos.y);
+      }
       hexagon_instanced_mesh.setColorAt(interId, light_green);
     }
     hexagon_instanced_mesh.instanceColor.needsUpdate = true;
   }
+
+  camera_target.update();
 
   renderer.render(scene, camera);
 }
