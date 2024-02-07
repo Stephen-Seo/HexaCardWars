@@ -31,8 +31,8 @@ class Hexagon {
 
     to_int_hex() {
         let int_hex = new Hexagon(this.x, this.z);
-        int_hex.x = Math.floor(int_hex.x);
-        int_hex.z = Math.floor(int_hex.z);
+        int_hex.x = Math.round(int_hex.x);
+        int_hex.z = Math.round(int_hex.z);
         int_hex.y = -int_hex.x - int_hex.z;
         return int_hex;
     }
@@ -58,7 +58,7 @@ class Hexagon {
     }
 
     is_same_int(q, r) {
-        return Math.floor(this.x) === q && Math.floor(this.z) === r;
+        return Math.round(this.x) === q && Math.round(this.z) === r;
     }
 
     is_same_hex(other) {
@@ -99,7 +99,7 @@ class Hexagon {
     }
 
     distance_int(other) {
-        return Math.floor(this.distance(other));
+        return Math.round(this.distance(other));
     }
 
     lerp(other, amount) {
