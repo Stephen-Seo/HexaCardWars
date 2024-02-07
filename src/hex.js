@@ -238,7 +238,7 @@ class Hexagon {
         result.push(this);
 
         for (let i = 1; i <= radius; ++i) {
-            result.concat(this.ring(i));
+            result = result.concat(this.ring(i));
         }
 
         return result;

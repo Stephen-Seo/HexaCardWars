@@ -114,21 +114,17 @@ function animate(timestamp) {
     hexagon_instanced_mesh = new THREE.InstancedMesh(hexagon.children[0].geometry, hexagon.children[0].material, hexagon_count);
     hexagon_instanced_mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 
-    // Center hex.
+    // Setup instanced mesh with hexagons.
     let hexagon_hex = new Hexagon(0, 0);
-    let hexagon_pos = hexagon_hex.to_pixel(1);
-    dummy.position.set(hexagon_pos.x, 0, hexagon_pos.y);
-    dummy.updateMatrix();
-    hexagon_instanced_mesh.setMatrixAt(0, dummy.matrix);
-
-    // Layer 1 ring hexes.
-    let ring_hexagons = hexagon_hex.ring(1);
-    for (let i = 0; i < ring_hexagons.length; ++i) {
-      if (i + 1 < hexagon_count) {
-        hexagon_pos = ring_hexagons[i].to_pixel(1);
+    let spiral_hexagons = hexagon_hex.spiral(1);
+    for (let i = 0; i < spiral_hexagons.length; ++i) {
+      if (i < hexagon_count) {
+        let hexagon_pos = spiral_hexagons[i].to_pixel(1);
         dummy.position.set(hexagon_pos.x, 0, hexagon_pos.y);
         dummy.updateMatrix();
-        hexagon_instanced_mesh.setMatrixAt(i + 1, dummy.matrix);
+        hexagon_instanced_mesh.setMatrixAt(i, dummy.matrix);
+      } else {
+        console.log("WARNING: instanced mesh setup with too high index: " + i + "!");
       }
     }
 
