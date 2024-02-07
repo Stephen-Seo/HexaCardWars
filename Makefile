@@ -1,14 +1,19 @@
 THREEJS_ZIP_NAME=threejs_bd885e92f3fe8f71fc1160492e9a81ea9d8d94fe.zip
 
-all: dist/index.html dist/game.js dist/threejs
+JAVASCRIPT_SOURCES = \
+	src/game.js
+
+JAVASCRIPT_SOURCES_OUT = $(subst src,dist,${JAVASCRIPT_SOURCES})
+
+all: dist/index.html dist/threejs ${JAVASCRIPT_SOURCES_OUT}
 
 dist/index.html: index.html
 	@mkdir -p dist
 	cp index.html dist/index.html
 
-dist/game.js: src/game.js
-	@mkdir -p dist
-	cp src/game.js dist/game.js
+dist/%.js: src/%.js
+	@mkdir -p $(dir $<)
+	cp $< $@
 
 dist/threejs: third_party/${THREEJS_ZIP_NAME}
 	@mkdir -p dist/threejs
