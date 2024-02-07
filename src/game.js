@@ -8,6 +8,10 @@ import { Hexagon, hex_from_pixel } from "./hex.js";
 
 const scene = new THREE.Scene();
 
+// Other constants.
+const white = new THREE.Color().setHex(0xFFFFFF);
+const light_green = new THREE.Color().setHex(0x88FF88);
+
 // Timer setup.
 const timer = new Timer();
 
@@ -17,7 +21,7 @@ const unit = 6;
 let width = ratio > 1 ? ratio * unit : unit;
 let height = ratio > 1 ? unit : unit / ratio;
 
-const camera = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, height / -2, 1, 10);
+const camera = new THREE.OrthographicCamera(-width / 2, width / 2, height / 2, height / -2, 1, 20);
 // DEBUG
 //window.globalCamera = camera;
 
@@ -42,12 +46,12 @@ window.addEventListener('resize', (_event) => {
 });
 
 camera.position.x = 0;
-camera.position.y = 3;
-camera.position.z = 7;
+camera.position.y = 6;
+camera.position.z = 10;
 camera.lookAt(0, 0, 0);
 
-const CAMERA_ORBIT_RADIUS = 7.0;
-const CAMERA_ORBIT_RATE = 0.3;
+const CAMERA_ORBIT_RADIUS = 10.0;
+const CAMERA_ORBIT_RATE = 0.1;
 let camera_orbit_radians = 0;
 
 function orbit_camera_update() {
@@ -73,7 +77,7 @@ window.addEventListener("pointermove", (event) => {
 
 // Load hexagon.
 const gltf_loader = new GLTFLoader();
-const hexagon_count = 7;
+const hexagon_count = 37;
 let hexagon = undefined;
 let hexagon_instanced_mesh = undefined;
 let dummy = new THREE.Object3D();
@@ -101,7 +105,7 @@ gltf_loader.load(
 //scene.add(cube);
 
 // Create light.
-const light = new THREE.AmbientLight(0xFFFFFF, 1);
+const light = new THREE.AmbientLight(0xFFFFFF, 3);
 scene.add(light);
 
 // Main animation loop.
@@ -116,7 +120,7 @@ function animate(timestamp) {
 
     // Setup instanced mesh with hexagons.
     let hexagon_hex = new Hexagon(0, 0);
-    let spiral_hexagons = hexagon_hex.spiral(1);
+    let spiral_hexagons = hexagon_hex.spiral(3);
     for (let i = 0; i < spiral_hexagons.length; ++i) {
       if (i < hexagon_count) {
         let hexagon_pos = spiral_hexagons[i].to_pixel(1);
@@ -133,18 +137,22 @@ function animate(timestamp) {
 
   orbit_camera_update();
 
-  renderer.render(scene, camera);
-
-  if (is_mouseclick) {
-    is_mouseclick = false;
-    raycaster.setFromCamera(mouse_pos, camera);
-    if (hexagon !== undefined) {
-      const intersect = raycaster.intersectObject(hexagon);
-      if (intersect.length != 0) {
-        console.log("Clicked on hexagon.");
-      }
+  if (hexagon_instanced_mesh !== undefined) {
+    // Color to white before raycast.
+    for (let i = 0; i < hexagon_count; ++i) {
+      hexagon_instanced_mesh.setColorAt(i, white);
     }
+    // Raycast onto instances.
+    raycaster.setFromCamera(mouse_pos, camera);
+    const intersection = raycaster.intersectObject(hexagon_instanced_mesh);
+    for (let i = 0; i < intersection.length; ++i) {
+      const interId = intersection[i].instanceId;
+      hexagon_instanced_mesh.setColorAt(interId, light_green);
+    }
+    hexagon_instanced_mesh.instanceColor.needsUpdate = true;
   }
+
+  renderer.render(scene, camera);
 }
 
 animate();
