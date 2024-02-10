@@ -19,7 +19,11 @@ function updateMouseSelections(mouseSelections,
                                raycaster,
                                mouse_pos,
                                camera,
-                               inst_mesh) {
+                               inst_mesh,
+                               enabled) {
+  if (enabled !== undefined && enabled === false) {
+    return;
+  }
   mouseSelections.reverse();
   mouseSelections[0].length = 0;
 

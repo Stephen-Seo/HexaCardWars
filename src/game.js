@@ -215,7 +215,8 @@ function animate(timestamp) {
                           raycaster,
                           mouse_pos,
                           camera,
-                          hexagon_instanced_mesh);
+                          hexagon_instanced_mesh,
+                          is_mouseclick);
     for (let i = 0; i < mouseSelections[0].length; ++i) {
       hexagon_instanced_mesh.setColorAt(mouseSelections[0][i], light_green);
       hexagon_instanced_mesh.instanceColor.needsUpdate = true;
@@ -251,6 +252,8 @@ function animate(timestamp) {
   } // hexagon_instanced_mesh !== undefined
 
   camera_target.update();
+
+  is_mouseclick = false;
 
   renderer.render(scene, camera);
 }
