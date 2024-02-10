@@ -62,17 +62,17 @@ let camera_target = {
     }
   },
   "set_x": function (v) {
-    this.sta_x = this.end_x;
+    this.sta_x = this.get_x();
     this.end_x = v;
     this.amount = 0.0;
   },
   "set_y": function (v) {
-    this.sta_y = this.end_y;
+    this.sta_y = this.get_y();
     this.end_y = v;
     this.amount = 0.0;
   },
   "set_z": function (v) {
-    this.sta_z = this.end_z;
+    this.sta_z = this.get_z();
     this.end_z = v;
     this.amount = 0.0;
   },
@@ -217,6 +217,8 @@ function animate(timestamp) {
                           camera,
                           hexagon_instanced_mesh,
                           is_mouseclick);
+    let target_indices = [];
+
     for (let i = 0; i < mouseSelections[0].length; ++i) {
       hexagon_instanced_mesh.setColorAt(mouseSelections[0][i], light_green);
       hexagon_instanced_mesh.instanceColor.needsUpdate = true;
@@ -231,6 +233,8 @@ function animate(timestamp) {
       if (!was_already_active) {
         hexPositions.set_selected(mouseSelections[0][i], true);
       }
+
+      target_indices.push(mouseSelections[0][i]);
     }
     for (let i = 0; i < mouseSelections[1].length; ++i) {
       let still_active = false;
@@ -249,6 +253,25 @@ function animate(timestamp) {
     }
 
     hexPositions.update(timer.getDelta(), hexagon_instanced_mesh);
+
+    // Set camera target if clicked on.
+    if (target_indices.length !== 0) {
+      let tx = 0.0;
+      let ty = 0.0;
+      let tz = 0.0;
+
+      for (let i = 0; i < target_indices.length; ++i) {
+        tx += hexPositions.get_hex_x(target_indices[i]);
+        ty += hexPositions.get_hex_y(target_indices[i]);
+        tz += hexPositions.get_hex_z(target_indices[i]);
+      }
+
+      tx /= target_indices.length;
+      ty /= target_indices.length;
+      tz /= target_indices.length;
+
+      camera_target.set_pos(tx, ty, tz);
+    }
   } // hexagon_instanced_mesh !== undefined
 
   camera_target.update();
