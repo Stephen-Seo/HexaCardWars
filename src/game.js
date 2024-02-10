@@ -1,17 +1,15 @@
 "use strict";
 
+import * as CONSTANTS from "./constants.js";
+
 import * as THREE from "./threejs/Three.js";
 import { GLTFLoader } from "./threejs/addons/loaders/GLTFLoader.js";
 import { Timer } from "./threejs/addons/misc/Timer.js";
 
 import { Hexagon, hex_from_pixel, HPosition, HPositions } from "./hex.js";
-import { cube_lerp, updateMouseSelections } from "./utils.js";
+import { cube_lerp } from "./utils.js";
 
 const scene = new THREE.Scene();
-
-// Other constants.
-const white = new THREE.Color().setHex(0xFFFFFF);
-const light_green = new THREE.Color().setHex(0x88FF88);
 
 // Timer setup.
 const timer = new Timer();
@@ -197,7 +195,7 @@ function animate(timestamp) {
     for (let i = 0; i < hexPositions.get_count(); ++i) {
       if (i < hexagon_count) {
         hexagon_instanced_mesh.setMatrixAt(i, hexPositions.get_matrix(i));
-        hexagon_instanced_mesh.setColorAt(i, white);
+        hexagon_instanced_mesh.setColorAt(i, CONSTANTS.white);
         hexagon_instanced_mesh.instanceColor.needsUpdate = true;
       } else {
         console.log("WARNING: instanced mesh setup with too high index: " + i + "!");
@@ -210,49 +208,13 @@ function animate(timestamp) {
   orbit_camera_update();
 
   if (hexagon_instanced_mesh !== undefined) {
-    // Handle mouse "selections" (hover state).
-    updateMouseSelections(mouseSelections,
+    const target_indices =
+      hexPositions.update(timer.getDelta(),
+                          hexagon_instanced_mesh,
                           raycaster,
                           mouse_pos,
                           camera,
-                          hexagon_instanced_mesh,
                           is_mouseclick);
-    let target_indices = [];
-
-    for (let i = 0; i < mouseSelections[0].length; ++i) {
-      hexagon_instanced_mesh.setColorAt(mouseSelections[0][i], light_green);
-      hexagon_instanced_mesh.instanceColor.needsUpdate = true;
-
-      let was_already_active = false;
-      for (let j = 0; j < mouseSelections[1].length; ++j) {
-        if (mouseSelections[0][i] === mouseSelections[1][j]) {
-          was_already_active = true;
-          break;
-        }
-      }
-      if (!was_already_active) {
-        hexPositions.set_selected(mouseSelections[0][i], true);
-      }
-
-      target_indices.push(mouseSelections[0][i]);
-    }
-    for (let i = 0; i < mouseSelections[1].length; ++i) {
-      let still_active = false;
-      for (let j = 0; j < mouseSelections[0].length; ++j) {
-        if (mouseSelections[0][j] === mouseSelections[1][i]) {
-          still_active = true;
-          break;
-        }
-      }
-
-      if (!still_active) {
-        hexagon_instanced_mesh.setColorAt(mouseSelections[1][i], white);
-        hexagon_instanced_mesh.instanceColor.needsUpdate = true;
-        hexPositions.set_selected(mouseSelections[1][i], false);
-      }
-    }
-
-    hexPositions.update(timer.getDelta(), hexagon_instanced_mesh);
 
     // Set camera target if clicked on.
     if (target_indices.length !== 0) {
@@ -271,7 +233,7 @@ function animate(timestamp) {
       tz /= target_indices.length;
 
       camera_target.set_pos(tx, ty, tz);
-    }
+    } // target_indices.length !== 0
   } // hexagon_instanced_mesh !== undefined
 
   camera_target.update();

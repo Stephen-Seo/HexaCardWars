@@ -1,5 +1,6 @@
 "use strict";
 
+import * as CONSTANTS from "./constants.js";
 import * as THREE from "./threejs/Three.js";
 import { lerp as f_lerp, cube_lerp } from "./utils.js"
 
@@ -337,6 +338,8 @@ class HPositions {
       this.positions.push(new HPosition(i, hexagons[i], hexagon_size));
     }
     this.dummyObj = new THREE.Object3D();
+
+    this.mouseSelections = [[], []];
   }
 
   get_hex_pos(index) {
@@ -371,10 +374,63 @@ class HPositions {
     this.positions[index].set_selected(b);
   }
 
-  update(delta, inst_mesh) {
+  update(delta, inst_mesh, raycaster, mouse_pos, camera, is_mouseclick) {
+    // Update mouseSelections
+    while(true) {
+      if (is_mouseclick === false) {
+        break;
+      }
+      this.mouseSelections.reverse();
+      this.mouseSelections[0].length = 0;
+
+      raycaster.setFromCamera(mouse_pos, camera);
+      const intersection = raycaster.intersectObject(inst_mesh);
+      for (let i = 0; i < intersection.length; ++i) {
+        this.mouseSelections[0].push(intersection[i].instanceId);
+      }
+      break;
+    }
+
+    let target_indices = [];
+
+    for (let i = 0; i < this.mouseSelections[0].length; ++i) {
+      inst_mesh.setColorAt(this.mouseSelections[0][i], CONSTANTS.light_green);
+      inst_mesh.instanceColor.needsUpdate = true;
+
+      let was_already_active = false;
+      for (let j = 0; j < this.mouseSelections[1].length; ++j) {
+        if (this.mouseSelections[0][i] === this.mouseSelections[1][j]) {
+          was_already_active = true;
+          break;
+        }
+      }
+      if (!was_already_active) {
+        this.set_selected(this.mouseSelections[0][i], true);
+      }
+
+      target_indices.push(this.mouseSelections[0][i]);
+    }
+    for (let i = 0; i < this.mouseSelections[1].length; ++i) {
+      let still_active = false;
+      for (let j = 0; j < this.mouseSelections[0].length; ++j) {
+        if (this.mouseSelections[0][j] === this.mouseSelections[1][i]) {
+          still_active = true;
+          break;
+        }
+      }
+
+      if (!still_active) {
+        inst_mesh.setColorAt(this.mouseSelections[1][i], CONSTANTS.white);
+        inst_mesh.instanceColor.needsUpdate = true;
+        this.set_selected(this.mouseSelections[1][i], false);
+      }
+    }
+
     for (let i = 0; i < this.positions.length; ++i) {
       this.positions[i].update(delta, inst_mesh, this.dummyObj);
     }
+
+    return target_indices;
   }
 }
 

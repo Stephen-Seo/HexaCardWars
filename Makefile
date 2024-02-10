@@ -7,7 +7,8 @@ THREEJS_ZIPS = \
 JAVASCRIPT_SOURCES = \
 	src/game.js \
 	src/hex.js \
-	src/utils.js
+	src/utils.js \
+	src/constants.js
 
 JAVASCRIPT_SOURCES_OUT = $(subst src,dist,${JAVASCRIPT_SOURCES})
 

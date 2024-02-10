@@ -15,25 +15,6 @@ function cube_lerp(a, b, amount) {
   return (1.0 - cubed) * a + cubed * b;
 }
 
-function updateMouseSelections(mouseSelections,
-                               raycaster,
-                               mouse_pos,
-                               camera,
-                               inst_mesh,
-                               enabled) {
-  if (enabled !== undefined && enabled === false) {
-    return;
-  }
-  mouseSelections.reverse();
-  mouseSelections[0].length = 0;
-
-  raycaster.setFromCamera(mouse_pos, camera);
-  const intersection = raycaster.intersectObject(inst_mesh);
-  for (let i = 0; i < intersection.length; ++i) {
-    mouseSelections[0].push(intersection[i].instanceId);
-  }
-}
-
-export { lerp, sq_lerp, cube_lerp, updateMouseSelections }
+export { lerp, sq_lerp, cube_lerp }
 
 // vim: et sw=2 ts=2 sts=2
